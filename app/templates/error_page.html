@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Todo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="{{ theme }}-theme">
+    <h1>Edit Todo</h1>
+
+    <!-- Form for editing the selected todo -->
+    <form action="{{ url_for('todo.update', todo_id=todo.todo_id) }}" method="POST">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" value="{{ todo.title }}" required><br><br>
+
+        <label for="description">Description:</label>
+        <input type="text" id="description" name="description" value="{{ todo.description }}" required><br><br>
+
+        <button type="submit">Update</button>
+    </form>
+
+    <a href="{{ url_for('todo.list_todos') }}">Back to List</a>
+</body>
+</html>

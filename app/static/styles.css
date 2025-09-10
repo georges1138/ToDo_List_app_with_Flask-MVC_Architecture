@@ -1,0 +1,29 @@
+body.light-theme {
+    font-family: Arial, sans-serif;
+    margin: 10px;
+    color: #1c1c1c; /* Dark text color for contrast */
+    background-color: #f4f4f4; /* Light background for light mode */
+}
+
+body.dark-theme {
+    font-family: Arial, sans-serif;
+    margin: 10px;
+    color: #e0e0e0;  /* Light text color for contrast */
+    background-color: #1c1c1c;  /* Dark background for dark mode */
+}
+
+input, select, button {
+    margin: 3px 0;
+    padding: 5px;
+}
+
+button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body class="{{ theme }}-theme">
+    <h1>Todo List</h1>
+
+    <!-- Option to switch themes -->
+    <form action="{{ url_for('theme.set_theme', theme=('dark' if theme == 'light' else 'light')) }}" method="GET" style="display: inline;">
+        <button type="submit">Switch Theme</button>
+    </form>
+
+    <!-- Filter and sort options -->
+    <form action="{{ url_for('todo.list_todos') }}" method="GET">
+        <div class="form-group">
+            <label for="sort_by">Sort by:</label>
+            <select id="sort_by" name="sort_by">
+                <option value="" selected>None</option>
+                <option value="title">Title</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="filter_by">Filter by initial letters:</label>
+            <input type="text" id="filter_by" name="filter_by" placeholder="Enter letters...">
+        </div>
+        <button type="submit">Apply</button>
+    </form>
+
+    <!-- List all todos -->
+    <ul>
+        {% for todo in todos %}
+            <li>
+                <strong>{{ todo.title }}</strong>: {{ todo.description }}
+                <a href="{{ url_for('todo.edit_todo', todo_id=todo.todo_id) }}">Edit</a>
+                <form action="{{ url_for('todo.delete', todo_id=todo.todo_id) }}" method="POST" style="display: inline;">
+                    <button type="submit">Delete</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Form for adding a new todo -->
+    <form action="{{ url_for('todo.add') }}" method="POST">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required><br><br>
+
+        <label for="description">Description:</label>
+        <input type="text" id="description" name="description" required><br><br>
+
+        <button type="submit">Add Todo</button>
+    </form>
+
+    <!-- TODO: Create a logout form -->
+    <!-- - Set the action to the 'user.logout' route -->
+    <!-- - Use the 'POST' method -->
+        <!-- TODO: Add a button with label 'Logout' -->
+    <form action="{{ url_for('user.logout') }}" method="POST" style="display: inline;">
+        <button type="submit">Logout</button>
+    </form>
+</body>
+</html>
