@@ -2,8 +2,9 @@ from models.todo import Todo, db
 
 class TodoService:
     @staticmethod
-    def get_all(sort_by=None, filter_by=None):
-        query = Todo.query
+    def get_all(user_id, sort_by=None, filter_by=None):
+        query = Todo.query.filter_by(user_id=user_id)
+
         if filter_by:
             query = query.filter(Todo.title.ilike(f'{filter_by}%'))
         if sort_by == 'title':
@@ -11,19 +12,27 @@ class TodoService:
         return query.all()
 
     @staticmethod
-    def get_by_id(todo_id):
-        return Todo.query.get(todo_id)
+    def get_by_id(user_id, todo_id):
+        return Todo.query.filter_by(
+            todo_id=todo_id,
+            user_id=user_id
+        ).first()
 
     @staticmethod
-    def add(title, description):
-        new_todo = Todo(title, description)
+    def add(user_id, title, description):
+        new_todo = Todo(
+            title=title,
+            description=description,
+            user_id=user_id
+        )
         db.session.add(new_todo)
         db.session.commit()
         return new_todo
 
     @staticmethod
-    def update(todo_id, title, description):
-        todo = TodoService.get_by_id(todo_id)
+    def update(user_id, todo_id, title, description):
+        todo = TodoService.get_by_id(user_id, todo_id)
+
         if todo:
             todo.title = title
             todo.description = description
@@ -32,8 +41,9 @@ class TodoService:
         return False
 
     @staticmethod
-    def delete(todo_id):
-        todo = TodoService.get_by_id(todo_id)
+    def delete(user_id, todo_id):
+        todo = TodoService.get_by_id(user_id, todo_id)
+
         if todo:
             db.session.delete(todo)
             db.session.commit()
