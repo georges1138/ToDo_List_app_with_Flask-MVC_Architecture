@@ -3,20 +3,30 @@ from models.todo import Todo, db
 class TodoService:
     @staticmethod
     def get_all(user_id, sort_by=None, filter_by=None):
-        query = Todo.query.filter_by(user_id=user_id)
+        stmt = db.select(Todo).where(
+            Todo.user_id == user_id
+        )
 
         if filter_by:
-            query = query.filter(Todo.title.ilike(f'{filter_by}%'))
+            stmt = stmt.where(
+                Todo.title.ilike(f'{filter_by}%')
+            )
         if sort_by == 'title':
-            query = query.order_by(Todo.title)
-        return query.all()
+            stmt = stmt.order_by(Todo.title)
+        return db.session.execute(
+            stmt
+        ).scalars().all()
 
     @staticmethod
     def get_by_id(user_id, todo_id):
-        return Todo.query.filter_by(
-            todo_id=todo_id,
-            user_id=user_id
-        ).first()
+        stmt = db.select(Todo).where(
+            Todo.todo_id == todo_id,
+            Todo.user_id == user_id
+        )
+
+        return db.session.execute(
+            stmt
+        ).scalar_one_or_none()
 
     @staticmethod
     def add(user_id, title, description):
