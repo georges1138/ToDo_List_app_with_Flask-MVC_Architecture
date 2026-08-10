@@ -62,6 +62,9 @@ def test_add_todo(app):
     assert todo.title == "Buy milk"
     assert todo.description == "Get whole milk"
     assert todo.user_id == user.id
+    assert todo.completed is False
+    assert todo.completed_at is None
+    assert todo.created_at is not None
 
 
 def test_get_all_excludes_other_users(todo_scenario):
@@ -176,3 +179,74 @@ def test_delete_removes_owners_todo(todo_scenario):
 
     assert deleted_todo is None
 
+
+def test_toggle_complete_marks_owners_todo_complete(todo_scenario):
+    user_a = todo_scenario['user_a']
+    todo_a = todo_scenario['todo_a']
+
+    todo_a_id = todo_a.todo_id
+
+    result = TodoService.toggle_complete(
+        user_a.id,
+        todo_a_id
+    )
+
+    assert result is True
+
+    db.session.expire_all()
+
+    updated_todo = db.session.get(Todo, todo_a_id)
+
+    assert updated_todo is not None
+    assert updated_todo.completed is True
+    assert updated_todo.completed_at is not None
+
+
+def test_toggle_complete_does_not_change_other_users_todo(todo_scenario):
+    user_a = todo_scenario['user_a']
+    todo_b = todo_scenario['todo_b']
+
+    todo_b_id = todo_b.todo_id
+
+    result = TodoService.toggle_complete(
+        user_a.id,
+        todo_b_id
+    )
+
+    assert result is False
+
+    db.session.expire_all()
+
+    unchanged_todo = db.session.get(Todo, todo_b_id)
+
+    assert unchanged_todo is not None
+    assert unchanged_todo.completed is False
+    assert unchanged_todo.completed_at is None
+
+
+def test_toggle_complete_twice_restores_incomplete_state(todo_scenario):
+    user_a = todo_scenario["user_a"]
+    todo_a = todo_scenario["todo_a"]
+
+    todo_a_id = todo_a.todo_id
+
+    first_result = TodoService.toggle_complete(
+        user_a.id,
+        todo_a_id
+    )
+
+    second_result = TodoService.toggle_complete(
+        user_a.id,
+        todo_a_id
+    )
+
+    assert first_result is True
+    assert second_result is True
+
+    db.session.expire_all()
+
+    todo = db.session.get(Todo, todo_a_id)
+
+    assert todo is not None
+    assert todo.completed is False
+    assert todo.completed_at is None

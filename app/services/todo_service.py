@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from models.todo import Todo, db
 
 class TodoService:
@@ -59,3 +60,24 @@ class TodoService:
             db.session.commit()
             return True
         return False
+
+    @staticmethod
+    def toggle_complete(user_id, todo_id):
+        todo = TodoService.get_by_id(
+            user_id,
+            todo_id
+        )
+
+        if not todo:
+            return False
+
+        if todo.completed:
+            todo.completed = False
+            todo.completed_at = None
+        else:
+            todo.completed = True
+            todo.completed_at = datetime.now(timezone.utc)
+
+        db.session.commit()
+
+        return True
