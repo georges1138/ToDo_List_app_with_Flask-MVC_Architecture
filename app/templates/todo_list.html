@@ -34,11 +34,22 @@
     <ul>
         {% for todo in todos %}
             <li>
-                <strong>{{ todo.title }}</strong>: {{ todo.description }}
+                <div class="todo-item {% if todo.completed %}completed{% endif %}">
+                <strong class="todo-title">{{ todo.title }}</strong>: {{ todo.description }}
                 <a href="{{ url_for('todo.edit_todo', todo_id=todo.todo_id) }}">Edit</a>
                 <form action="{{ url_for('todo.delete', todo_id=todo.todo_id) }}" method="POST" style="display: inline;">
                     <button type="submit">Delete</button>
                 </form>
+                <form action="{{ url_for('todo.toggle_complete', todo_id=todo.todo_id) }}" method="POST" style="display: inline;">
+                    <button type="submit">
+                        {% if todo.completed %}
+                            Reopen
+                        {% else %}
+                            Done
+                        {% endif %}
+                    </button>
+                </form>
+                </div>
             </li>
         {% endfor %}
     </ul>
@@ -54,10 +65,6 @@
         <button type="submit">Add Todo</button>
     </form>
 
-    <!-- TODO: Create a logout form -->
-    <!-- - Set the action to the 'user.logout' route -->
-    <!-- - Use the 'POST' method -->
-        <!-- TODO: Add a button with label 'Logout' -->
     <form action="{{ url_for('user.logout') }}" method="POST" style="display: inline;">
         <button type="submit">Logout</button>
     </form>

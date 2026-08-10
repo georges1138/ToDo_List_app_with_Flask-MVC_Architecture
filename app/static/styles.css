@@ -27,3 +27,11 @@ button {
 button:hover {
     background-color: #0056b3;
 }
+
+.todo-item.completed {
+    opacity: 0.6;
+}
+
+.todo-item.completed .todo-title {
+    text-decoration: line-through;
+}

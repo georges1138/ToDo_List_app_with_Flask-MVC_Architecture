@@ -102,3 +102,16 @@ def delete(todo_id):
     )
 
     return redirect(url_for('todo.list_todos'))
+
+
+@todo_controller.route('/toggle/<int:todo_id>', methods=['POST'])
+def toggle_complete(todo_id):
+    user_id = session['user_id']
+
+    todo_service.toggle_complete(
+        user_id,
+        todo_id
+    )
+
+    return redirect(url_for('todo.list_todos'))
+
