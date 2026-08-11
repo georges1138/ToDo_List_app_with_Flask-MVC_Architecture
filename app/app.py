@@ -1,4 +1,6 @@
 from flask import Flask
+from flask_migrate import Migrate
+
 from controllers.todo_controller import todo_controller
 from controllers.theme_controller import theme_controller
 from controllers.user_controller import user_controller
@@ -6,6 +8,9 @@ from middlewares.error_handler import setup_error_handler
 from middlewares.authentication_middleware import require_login_middleware
 from models import db
 from config import Config
+
+
+migrate = Migrate()
 
 
 def create_app(test_config=None):
@@ -29,6 +34,9 @@ def create_app(test_config=None):
 
     # Initialize the database
     db.init_app(app)
+
+    # Initialize database migrations
+    migrate.init_app(app, db)
 
     # Setup error handler middleware
     setup_error_handler(app)
