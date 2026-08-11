@@ -17,10 +17,14 @@ def create_app(test_config=None):
     if test_config:
         app.config.update(test_config)
 
-    # Verify secret is set
+    # Verify secret and database is set
     if not app.config.get("SECRET_KEY"):
         raise RuntimeError(
             "SECRET_KEY environment variable is required"
+        )
+    if not app.config.get("SQLALCHEMY_DATABASE_URI"):
+        raise RuntimeError(
+            "DATABASE_URL environment variable is required"
         )
 
     # Initialize the database
@@ -36,9 +40,6 @@ def create_app(test_config=None):
     app.register_blueprint(todo_controller)
     app.register_blueprint(user_controller)
     app.register_blueprint(theme_controller)
-
-    with app.app_context():
-        db.create_all()
 
     return app
 
