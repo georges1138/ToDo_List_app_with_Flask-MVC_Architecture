@@ -4,15 +4,20 @@ from models.todo import Todo, db
 
 class ReportingService:
     @staticmethod
-    def get_completion_rates():
+    def get_completion_rates(user_id=None):
         week_buck = cast(func.date_trunc('week', Todo.created_at), Date).label('week_buck')
 
-        weekly_user_todos = db.select(
+        weekly_query = db.select(
             Todo.user_id,
             week_buck,
             func.count().label('total_todos'),
             func.count().filter(Todo.completed.is_(True)).label('completed_todos')
-        ).group_by(
+        )
+        if user_id is not None:
+            weekly_query = weekly_query.where(
+                Todo.user_id == user_id
+            )
+        weekly_user_todos = weekly_query.group_by(
             Todo.user_id,
             week_buck
         ).cte("weekly_user_todos")

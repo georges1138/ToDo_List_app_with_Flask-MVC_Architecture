@@ -206,3 +206,17 @@ def test_user_partitions_are_independent(reporting_scenario):
     assert alice_week_1.cumulative_total == alice_week_1.total_todos == 2
     assert alice_week_1.cumulative_completed == alice_week_1.completed_todos == 0
 
+
+def test_completion_rates_can_be_scoped_to_user(reporting_scenario):
+    alice = reporting_scenario["user_a"]
+
+    rows = ReportingService.get_completion_rates(user_id=alice.id)
+
+    assert len(rows) == 4
+    assert all(row.user_id == alice.id for row in rows)
+
+
+def test_completion_rates_for_unknown_user_returns_empty(reporting_scenario):
+    rows = ReportingService.get_completion_rates(user_id=999)
+
+    assert rows == []
