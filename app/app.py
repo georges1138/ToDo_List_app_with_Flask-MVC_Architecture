@@ -4,6 +4,7 @@ from flask_migrate import Migrate
 from controllers.todo_controller import todo_controller
 from controllers.theme_controller import theme_controller
 from controllers.user_controller import user_controller
+from controllers.reporting_controller import reporting_controller
 from middlewares.error_handler import setup_error_handler
 from middlewares.authentication_middleware import require_login_middleware
 from models import db
@@ -47,6 +48,7 @@ def create_app(test_config=None):
     # Register blueprints
     app.register_blueprint(todo_controller)
     app.register_blueprint(user_controller)
+    app.register_blueprint(reporting_controller)
     app.register_blueprint(theme_controller)
 
     return app

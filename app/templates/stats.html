@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo List Statistics</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid currentColor;
+            padding: 10px;
+            text-align: center;
+            opacity: 0.8;
+        }
+        th {
+            background-color: rgba(128, 128, 128, 0.15);
+            font-weight: bold;
+            opacity: 1;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid currentColor;
+            padding: 6px 12px;
+            border-radius: 3px;
+            opacity: 0.9;
+        }
+        .back-link:hover {
+            background-color: rgba(128, 128, 128, 0.15);
+        }
+    </style>
+</head>
+<body class="{{ theme }}-theme">
+    <h1>Your Todo Statistics</h1>
+
+    <a href="{{ url_for('todo.list_todos') }}" class="back-link">← Back to Todo List</a>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Week</th>
+                <th>Weekly Created</th>
+                <th>Weekly Completed</th>
+                <th>Cumulative Created</th>
+                <th>Cumulative Completed</th>
+                <th>Completion Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+                <tr>
+                    <td>{{ row.week_buck }}</td>
+                    <td>{{ row.total_todos }}</td>
+                    <td>{{ row.completed_todos }}</td>
+                    <td>{{ row.cumulative_total }}</td>
+                    <td>{{ row.cumulative_completed }}</td>
+                    <td>{{ row.cumulative_completion_rate }}%</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6" style="padding: 20px;">No activity yet.</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
