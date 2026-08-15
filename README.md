@@ -15,7 +15,9 @@ The application supports authenticated users, per-user Todo ownership, completio
 - Light and dark themes
 - Custom error handling
 - Versioned PostgreSQL schema migrations with Flask-Migrate / Alembic
-- 15 automated pytest tests running against PostgreSQL
+- 23 automated pytest tests running against PostgreSQL
+- Per-user weekly completion statistics
+- Cumulative completion rates
 
 ## Tech Stack
 
@@ -194,7 +196,7 @@ For verbose output:
 uv run pytest -v
 ```
 
-The current suite contains **15 tests** covering Todo ownership, CRUD behavior, completion-state rules, user registration, and authentication behavior.
+The current suite contains **23 tests** covering Todo ownership and CRUD behavior, completion-state rules, user registration and authentication, and PostgreSQL-backed reporting behavior including weekly bucketing, cumulative completion rates, per-user window partitions, and scoped reporting.
 
 The test fixture creates and drops its schema in `todo_test`, so **do not point `TEST_DATABASE_URL` at the development `todo` database**.
 
@@ -221,6 +223,8 @@ Generated migration files live in `app/migrations/versions/` and should be revie
 **Development and test databases are isolated.** The application uses the `todo` PostgreSQL database, while pytest uses `todo_test`. This prevents destructive test cleanup from touching development data and ensures tests run against the same database engine as the application.
 
 **Todo completion stores both `completed` and `completed_at`.** The explicit Boolean keeps service and template logic easy to read, while the timestamp supports reporting. `TodoService.toggle_complete()` owns the invariant so reopening a Todo also clears its completion timestamp.
+
+**Weekly counts can be produced with `GROUP BY`, but cumulative completion statistics need each weekly row to retain its own values while also carrying running totals across earlier weeks for the same user.** A window function handles that ordered, per-user accumulation without collapsing the result set.
 
 ## Security
 
