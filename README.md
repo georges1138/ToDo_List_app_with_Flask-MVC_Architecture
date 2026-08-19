@@ -8,6 +8,7 @@ The application supports authenticated users, per-user Todo ownership, completio
 
 - User registration and login
 - Session-based authentication
+- Versioned REST API with Bearer token authentication
 - Per-user Todo ownership
 - Add, edit, delete, filter, and sort Todos
 - Mark Todos as complete or reopen them
@@ -15,7 +16,7 @@ The application supports authenticated users, per-user Todo ownership, completio
 - Light and dark themes
 - Custom error handling
 - Versioned PostgreSQL schema migrations with Flask-Migrate / Alembic
-- 23 automated pytest tests running against PostgreSQL
+- 56 automated pytest tests running against PostgreSQL
 - Per-user weekly completion statistics
 - Cumulative completion rates
 
@@ -196,9 +197,110 @@ For verbose output:
 uv run pytest -v
 ```
 
-The current suite contains **23 tests** covering Todo ownership and CRUD behavior, completion-state rules, user registration and authentication, and PostgreSQL-backed reporting behavior including weekly bucketing, cumulative completion rates, per-user window partitions, and scoped reporting.
+The current suite contains **56 tests** covering Todo ownership and CRUD behavior, completion-state rules, user registration and authentication, API token authentication, Todo API CRUD and authorization behavior, JSON error handling, and PostgreSQL-backed reporting behavior including weekly bucketing, cumulative completion rates, per-user window partitions, and scoped reporting.
 
 The test fixture creates and drops its schema in `todo_test`, so **do not point `TEST_DATABASE_URL` at the development `todo` database**.
+
+## REST API
+
+The application exposes a versioned JSON API alongside the server-rendered HTML interface.
+
+Base URL:
+
+```text
+http://localhost:3000/api/v1
+```
+
+### Authentication
+
+- API routes use Bearer token authentication rather than the browser session used by the server-rendered HTML interface.
+- A client obtains an API token by sending its username, password, and a token name to `POST /api/v1/tokens`.
+- The raw API token is returned only when the token is created, so clients should store it securely at that time.
+- Only a SHA-256 hash of the token is stored in PostgreSQL; the raw token is not persisted by the application.
+
+
+### Create an API token
+
+Send valid user credentials and a descriptive name for the token:
+
+```http
+POST /api/v1/tokens
+```
+
+Required JSON fields:
+
+- `username` — the username of an existing registered user.
+- `password` — the password for that user account.
+- `name` — a descriptive label that identifies the client or purpose of the token.
+
+Example request:
+
+```bash
+curl -X POST http://localhost:3000/api/v1/tokens \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "exampleuser",
+    "password": "example-password-not-real",
+    "name": "local-development"
+  }'
+```
+
+A successful request returns `201 Created` and a JSON response containing:
+
+```json
+{
+  "token": "<raw-token-returned-once>",
+  "token_id": 1,
+  "name": "local-development"
+}
+```
+
+The client must store the raw `token` value securely when it is returned because the application does not persist or display the raw token again.
+
+
+### Using the token
+
+Protected API routes expect the token in the HTTP `Authorization` header:
+
+```http
+Authorization: Bearer <token>
+```
+
+The Bearer token identifies the API user whose account and permissions apply to the request.
+
+Example:
+
+```bash
+curl http://localhost:3000/api/v1/todos \
+  -H "Authorization: Bearer <raw-token>"
+```
+
+If the `Authorization` header is missing or malformed, or the token is invalid or expired, the API returns `401 Unauthorized`.
+
+
+### Todo endpoints
+
+All Todo endpoints require Bearer token authentication.
+
+| Method | Endpoint | Purpose | Success |
+|---|---|---|---|
+| `GET` | `/api/v1/todos` | List Todos belonging to the authenticated user. | `200 OK` |
+| `GET` | `/api/v1/todos/<todo_id>` | Retrieve one Todo belonging to the authenticated user. | `200 OK` |
+| `POST` | `/api/v1/todos` | Create a new Todo for the authenticated user. | `201 Created` |
+| `PUT` | `/api/v1/todos/<todo_id>` | Replace the title and description of an existing Todo belonging to the authenticated user. | `200 OK` |
+| `DELETE` | `/api/v1/todos/<todo_id>` | Delete an existing Todo belonging to the authenticated user. | `204 No Content` |
+| `PATCH` | `/api/v1/todos/<todo_id>/completion` | Toggle an existing Todo belonging to the authenticated user between complete and incomplete. | `200 OK` |
+
+
+### API authorization
+
+For API requests, the authenticated user's identity is resolved from the Bearer token in the `Authorization` header rather than from a browser session.
+
+Every Todo lookup, update, deletion, and completion change is scoped to the user identified by that token. A client can therefore access or modify only Todos belonging to the authenticated API user.
+
+If a Todo ID belongs to another user, the API returns `404 Not Found`, the same response used when the Todo ID does not exist for the authenticated user.
+
+Returning `404 Not Found` instead of `403 Forbidden` avoids revealing whether a Todo with that ID exists under another user's account. A `403 Forbidden` response could disclose the existence of another user's Todo even though the requesting user is not authorized to access it.
 
 ## Database Migrations
 
@@ -216,7 +318,7 @@ Generated migration files live in `app/migrations/versions/` and should be revie
 
 ## Design Decisions
 
-**User ownership is passed into the service layer explicitly.** Controllers read `user_id` from the Flask session and pass it to services rather than allowing the service layer to depend directly on Flask session state. This keeps business logic easier to test and less tightly coupled to Flask.
+**User ownership is passed into the service layer explicitly.** The server-rendered HTML controllers read `user_id` from the Flask session, while API controllers resolve the user from the Bearer token and use `g.user_id`. Both paths then pass the authenticated user ID into the same ownership-aware service layer rather than allowing services to depend directly on session or request authentication state. This keeps business logic easier to test, reusable across both interfaces, and less tightly coupled to Flask.
 
 **`SECRET_KEY` and database configuration have no silent runtime fallback.** Missing configuration fails loudly instead of allowing the application to start with an insecure secret or an unintended database.
 
@@ -228,8 +330,10 @@ Generated migration files live in `app/migrations/versions/` and should be revie
 
 ## Security
 
+`POST /api/v1/tokens` requires valid user credentials. Invalid credentials return a generic `401 Unauthorized` response without revealing whether the username or password was incorrect. Issued API tokens are stored only as hashes rather than as raw token values. The token-creation endpoint does **not** currently implement rate limiting, so high-volume credential attempts remain a known production-hardening gap; a production deployment should add a shared-backend rate limiter, such as Redis.
+
 - Passwords are stored as hashes rather than plaintext.
 - Todo operations are scoped to the authenticated user.
-- Authentication middleware protects application routes by default, with explicit exemptions for authentication and static routes.
+- Browser routes are protected by session authentication middleware, while `/api/` routes bypass session authentication and use Bearer token authentication.
 - Session configuration requires an externally supplied secret key.
 - Unauthorized Todo update, delete, and completion operations are rejected by the service layer.

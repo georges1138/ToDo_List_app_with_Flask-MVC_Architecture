@@ -12,6 +12,21 @@ api_controller = Blueprint(
 )
 
 
+def _serialize_todo(todo):
+    return {
+        "todo_id": todo.todo_id,
+        "title": todo.title,
+        "description": todo.description,
+        "completed": todo.completed,
+        "created_at": todo.created_at.isoformat(),
+        "completed_at": (
+            todo.completed_at.isoformat()
+            if todo.completed_at
+            else None
+        ),
+    }
+
+
 @api_controller.route("/tokens", methods=["POST"])
 def create_token():
     # 1. request.get_json(...)
@@ -61,14 +76,9 @@ def get_todos():
     todos = TodoService.get_all(g.user_id)
 
     for todo in todos:
-        todo_data.append({
-            "todo_id": todo.todo_id,
-            "title": todo.title,
-            "description": todo.description,
-            "completed": todo.completed,
-            "created_at": todo.created_at.isoformat(),
-            "completed_at": todo.completed_at.isoformat() if todo.completed_at else None,
-        })
+        todo_data.append(
+            _serialize_todo(todo)
+        )
 
     return jsonify(todo_data), 200
 
@@ -84,17 +94,7 @@ def get_todo(todo_id):
     if todo is None:
         return jsonify({"error": "Todo not found"}), 404
 
-    todo_data = {
-        "todo_id": todo.todo_id,
-        "title": todo.title,
-        "description": todo.description,
-        "completed": todo.completed,
-        "created_at": todo.created_at.isoformat(),
-        "completed_at": todo.completed_at.isoformat()
-            if todo.completed_at else None,
-    }
-
-    return jsonify(todo_data), 200
+    return jsonify(_serialize_todo(todo)), 200
 
 
 @api_controller.route("/todos", methods=["POST"])
@@ -117,17 +117,7 @@ def create_todo():
         description=description
     )
 
-    todo_data = {
-        "todo_id": todo.todo_id,
-        "title": todo.title,
-        "description": todo.description,
-        "completed": todo.completed,
-        "created_at": todo.created_at.isoformat(),
-        "completed_at": todo.completed_at.isoformat()
-            if todo.completed_at else None,
-    }
-
-    return jsonify(todo_data), 201
+    return jsonify(_serialize_todo(todo)), 201
 
 
 @api_controller.route("/todos/<int:todo_id>", methods=["PUT"])
@@ -159,17 +149,7 @@ def update_todo(todo_id):
         todo_id=todo_id
     )
 
-    todo_data = {
-        "todo_id": todo.todo_id,
-        "title": todo.title,
-        "description": todo.description,
-        "completed": todo.completed,
-        "created_at": todo.created_at.isoformat(),
-        "completed_at": todo.completed_at.isoformat()
-            if todo.completed_at else None,
-    }
-
-    return jsonify(todo_data), 200
+    return jsonify(_serialize_todo(todo)), 200
 
 
 @api_controller.route("/todos/<int:todo_id>", methods=["DELETE"])
@@ -204,14 +184,4 @@ def toggle_todo_completion(todo_id):
         todo_id=todo_id
     )
 
-    todo_data = {
-        "todo_id": todo.todo_id,
-        "title": todo.title,
-        "description": todo.description,
-        "completed": todo.completed,
-        "created_at": todo.created_at.isoformat(),
-        "completed_at": todo.completed_at.isoformat()
-            if todo.completed_at else None,
-    }
-
-    return jsonify(todo_data), 200
+    return jsonify(_serialize_todo(todo)), 200
