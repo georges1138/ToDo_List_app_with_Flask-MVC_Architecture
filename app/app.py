@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_migrate import Migrate
 
+from controllers.api_controller import api_controller
 from controllers.todo_controller import todo_controller
 from controllers.theme_controller import theme_controller
 from controllers.user_controller import user_controller
@@ -46,6 +47,7 @@ def create_app(test_config=None):
     require_login_middleware(app)
 
     # Register blueprints
+    app.register_blueprint(api_controller)
     app.register_blueprint(todo_controller)
     app.register_blueprint(user_controller)
     app.register_blueprint(reporting_controller)
