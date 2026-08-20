@@ -72,8 +72,8 @@ The application separates responsibilities across several layers:
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/georges1138/ToDo_List_app_with_Flask-MVC_Architecture.git
-cd ToDo_List_app_with_Flask-MVC_Architecture
+git clone https://github.com/georges1138/flask-todo-service.git
+cd flask-todo-service
 ```
 
 ### 2. Install dependencies
